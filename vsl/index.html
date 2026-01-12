@@ -1037,13 +1037,29 @@ src="https://www.facebook.com/tr?id=4079932298944802&ev=PageView&noscript=1"
 
 <style>
   .video-area {
-    margin-bottom: 370px;
+    margin-bottom: 20px;
   }
   
   @media (max-width: 768px) {
     .video-area {
-      margin-bottom: 230px;
+      margin-bottom: 15px;
     }
+  }
+
+  /* Espaçamento dinâmico quando botão CTA aparece */
+  .video-area.cta-visible {
+    margin-bottom: 90px;
+  }
+  
+  @media (max-width: 768px) {
+    .video-area.cta-visible {
+      margin-bottom: 80px;
+    }
+  }
+
+  /* Transição suave */
+  .video-area {
+    transition: margin-bottom 0.3s ease;
   }
 </style>
 
@@ -1499,6 +1515,66 @@ let cardWidth = 340 + 24;
 let visibleCards = 4;
 let autoPlayInterval;
 let isTransitioning = false;
+
+// ===== SCRIPT PARA DETECTAR BOTÃO CTA DA VTURB =====
+function checkVTurbCTA() {
+    const videoArea = document.querySelector('.video-area');
+    if (!videoArea) return;
+
+    // Procura por botões CTA comuns da VTurb
+    const ctaSelectors = [
+        '.smartplayer-call-to-action',
+        '[class*="cta"]',
+        '[class*="call-to-action"]',
+        'a[href*="checkout"]',
+        'button[class*="cta"]'
+    ];
+
+    let ctaVisible = false;
+    
+    ctaSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+            // Verifica se o elemento está dentro ou próximo ao player
+            const rect = element.getBoundingClientRect();
+            if (rect.height > 0 && rect.width > 0) {
+                const computedStyle = window.getComputedStyle(element);
+                if (computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden') {
+                    ctaVisible = true;
+                }
+            }
+        });
+    });
+
+    // Adiciona ou remove classe baseado na visibilidade do CTA
+    if (ctaVisible) {
+        videoArea.classList.add('cta-visible');
+    } else {
+        videoArea.classList.remove('cta-visible');
+    }
+}
+
+// Verifica periodicamente se o botão CTA apareceu
+setInterval(checkVTurbCTA, 500);
+
+// Também verifica quando houver mudanças no DOM
+const observer2 = new MutationObserver(() => {
+    checkVTurbCTA();
+});
+
+// Observa mudanças no player
+setTimeout(() => {
+    const smartPlayer = document.querySelector('vturb-smartplayer');
+    if (smartPlayer) {
+        observer2.observe(smartPlayer, {
+            childList: true,
+            subtree: true,
+            attributes: true
+        });
+    }
+}, 2000);
+
+// ===== FIM SCRIPT VTURB CTA =====
 
 function updateCarouselSettings() {
     if (window.innerWidth <= 768) {
